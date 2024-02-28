@@ -2,7 +2,6 @@ package de.leafish;
 
 import java.io.File;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,7 +19,7 @@ public final class Installer {
         OperatingSystem os = detectOperatingSystem();
         ArrayList<String> command = new ArrayList<>(Arrays.asList(args));
         try {
-            File dir = Files.createTempDirectory("leafish_install").toFile();
+            File dir = new File("./leafish_install");
             dir.mkdir();
             dir.deleteOnExit();
             command.add(0, dir.getAbsolutePath() + "/" + INSTALLER_PATH + getExecutableExtension(os));
@@ -37,7 +36,6 @@ public final class Installer {
     private static void startInstaller(ArrayList<String> command, File directory) throws Exception {
         OperatingSystem os = detectOperatingSystem();
         File out = new File(directory.getAbsolutePath() + "/" + INSTALLER_PATH + getExecutableExtension(os));
-        // File updated = new File("./" + UPDATE_PATH + getExecutableExtension(os));
         System.out.println("Checking for installer...");
         if (!out.exists()) {
             System.out.println("Extracting installer...");
@@ -52,18 +50,14 @@ public final class Installer {
                     StandardCopyOption.REPLACE_EXISTING);
             System.out.println("Adjusting perms...");
             adjustPerms(directory);
-        }/* else if (updated.exists()) {
-            Files.copy(updated.toPath(), out.toPath(), StandardCopyOption.REPLACE_EXISTING);
-            updated.delete();
-            adjustPerms(); // FIXME: is this needed?
-        }*/
+        }
 
         Process proc = new ProcessBuilder(command).directory(directory).redirectOutput(ProcessBuilder.Redirect.INHERIT).redirectError(ProcessBuilder.Redirect.INHERIT).start();
         proc.waitFor();
     }
 
     private static void adjustPerms(File dir) throws Exception {
-        // FIXME: does MAC also need perms?
+        // FIXME: does MACOS also need perms?
         OperatingSystem os = detectOperatingSystem();
         if (os == OperatingSystem.LINUX) {
             // try giving us execute perms
