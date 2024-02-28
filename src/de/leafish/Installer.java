@@ -17,12 +17,13 @@ public final class Installer {
     private static final String INSTALLER_PATH = "installer";
 
     public static void main(String[] args) {
+        OperatingSystem os = detectOperatingSystem();
         ArrayList<String> command = new ArrayList<>(Arrays.asList(args));
-        command.add(0, "./" + INSTALLER_PATH + getExecutableExtension(detectOperatingSystem()));
         try {
             File dir = Files.createTempDirectory("leafish_install").toFile();
             dir.mkdir();
             dir.deleteOnExit();
+            command.add(0, dir.getAbsolutePath() + "/" + INSTALLER_PATH + getExecutableExtension(os));
             // try starting the bootstrap twice as it might have downloaded an update the first time it was started,
             // so we are always running the latest bootstrap available
             startInstaller(command, dir);
