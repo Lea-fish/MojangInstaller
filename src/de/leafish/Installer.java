@@ -36,33 +36,22 @@ public final class Installer {
     private static void startInstaller(ArrayList<String> command, File directory) throws Exception {
         OperatingSystem os = detectOperatingSystem();
         File out = new File(directory.getAbsolutePath() + "/" + INSTALLER_PATH + getExecutableExtension(os));
-        System.out.println("Checking for installer...");
-        if (!out.exists()) {
-            System.out.println("Extracting installer...");
-            String fileSuffix = getProcessorArchitecture().name().toLowerCase() + "_" + os.name().toLowerCase() + getExecutableExtension(os);
-            InputStream stream = Installer.class.getResourceAsStream("/install_" + fileSuffix);
-            if (stream == null) {
-                throw new RuntimeException("Failed extracting bootstrap binary from wrapper jar, is your architecture and operating system supported?");
-            }
-            java.nio.file.Files.copy(
-                    stream,
-                    out.toPath(),
-                    StandardCopyOption.REPLACE_EXISTING);
-            System.out.println("Adjusting perms...");
-            adjustPerms(directory);
+        out.deleteOnExit();
+        System.out.println("Extracting installer...");
+        String fileSuffix = getProcessorArchitecture().name().toLowerCase() + "_" + os.name().toLowerCase() + getExecutableExtension(os);
+        InputStream stream = Installer.class.getResourceAsStream("/install_" + fileSuffix);
+        if (stream == null) {
+            throw new RuntimeException("Failed extracting bootstrap binary from wrapper jar, is your architecture and operating system supported?");
         }
+        java.nio.file.Files.copy(
+                stream,
+                out.toPath(),
+                StandardCopyOption.REPLACE_EXISTING);
+        System.out.println("Adjusting perms...");
+        out.setExecutable(true);
 
         Process proc = new ProcessBuilder(command).directory(directory).redirectOutput(ProcessBuilder.Redirect.INHERIT).redirectError(ProcessBuilder.Redirect.INHERIT).start();
         proc.waitFor();
-    }
-
-    private static void adjustPerms(File dir) throws Exception {
-        // FIXME: does MACOS also need perms?
-        OperatingSystem os = detectOperatingSystem();
-        if (os == OperatingSystem.LINUX) {
-            // try giving us execute perms
-            new ProcessBuilder(("chmod 777 " + INSTALLER_PATH + getExecutableExtension(os)).split(" ")).redirectOutput(ProcessBuilder.Redirect.INHERIT).directory(dir).redirectError(ProcessBuilder.Redirect.INHERIT).start().waitFor();
-        }
     }
 
     private enum OperatingSystem {
